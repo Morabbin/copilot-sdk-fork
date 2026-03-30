@@ -24,7 +24,7 @@ import {
     StreamMessageReader,
     StreamMessageWriter,
 } from "vscode-jsonrpc/node.js";
-import { createServerRpc, registerClientApiHandlers } from "./generated/rpc.js";
+import { createServerRpc, registerClientSessionApiHandlers } from "./generated/rpc.js";
 import { getSdkProtocolVersion } from "./sdkProtocolVersion.js";
 import { CopilotSession, NO_RESULT_PERMISSION_V2_ERROR } from "./session.js";
 import { getTraceContext } from "./telemetry.js";
@@ -40,13 +40,13 @@ import type {
     SessionConfig,
     SessionContext,
     SessionEvent,
+    SessionFsConfig,
     SessionLifecycleEvent,
     SessionLifecycleEventType,
     SessionLifecycleHandler,
     SessionListFilter,
     SessionMetadata,
     SystemMessageCustomizeConfig,
-    SessionFsConfig,
     TelemetryConfig,
     Tool,
     ToolCallRequestPayload,
@@ -677,6 +677,9 @@ export class CopilotClient {
             session.on(config.onEvent);
         }
         this.sessions.set(sessionId, session);
+        if (this.sessionFsConfig) {
+            session.clientSessionApis.sessionFs = this.sessionFsConfig.createHandler(session);
+        }
 
         try {
             const response = await this.connection!.sendRequest("session.create", {
@@ -799,6 +802,9 @@ export class CopilotClient {
             session.on(config.onEvent);
         }
         this.sessions.set(sessionId, session);
+        if (this.sessionFsConfig) {
+            session.clientSessionApis.sessionFs = this.sessionFsConfig.createHandler(session);
+        }
 
         try {
             const response = await this.connection!.sendRequest("session.resume", {
@@ -1578,12 +1584,11 @@ export class CopilotClient {
                 await this.handleSystemMessageTransform(params)
         );
 
-        // Register session filesystem RPC handlers if configured.
-        if (this.sessionFsConfig) {
-            registerClientApiHandlers(this.connection, {
-                sessionFs: this.sessionFsConfig,
-            });
-        }
+        // Register client session API handlers.
+        const sessions = this.sessions;
+        registerClientSessionApiHandlers(this.connection, (sessionId) =>
+            sessions.get(sessionId)?.clientSessionApis,
+        );
 
         this.connection.onClose(() => {
             this.state = "disconnected";
