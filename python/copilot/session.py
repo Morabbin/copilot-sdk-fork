@@ -1260,9 +1260,7 @@ class CopilotSession:
                 request["elicitationSource"] = event.data.elicitation_source
             if event.data.url is not None:
                 request["url"] = event.data.url
-            asyncio.ensure_future(
-                self._handle_elicitation_request(request, request_id)
-            )
+            asyncio.ensure_future(self._handle_elicitation_request(request, request_id))
 
         elif event.type == SessionEventType.CAPABILITIES_CHANGED:
             cap: SessionCapabilities = {}
@@ -1403,7 +1401,7 @@ class CopilotSession:
                     )
                 )
             except (JsonRpcError, ProcessExitedError, OSError):
-                pass
+                pass  # Connection lost — nothing we can do
             return
 
         try:
@@ -1429,7 +1427,7 @@ class CopilotSession:
                     )
                 )
             except (JsonRpcError, ProcessExitedError, OSError):
-                pass
+                pass  # Connection lost — nothing we can do
 
     async def _handle_elicitation_request(
         self,
