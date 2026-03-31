@@ -678,7 +678,13 @@ export class CopilotClient {
         }
         this.sessions.set(sessionId, session);
         if (this.sessionFsConfig) {
-            session.clientSessionApis.sessionFs = this.sessionFsConfig.createHandler(session);
+            if (config.createSessionFsHandler) {
+                session.clientSessionApis.sessionFs = config.createSessionFsHandler(session);
+            } else {
+                throw new Error(
+                    "createSessionFsHandler is required in session config when sessionFs is enabled in client options."
+                );
+            }
         }
 
         try {
@@ -803,7 +809,13 @@ export class CopilotClient {
         }
         this.sessions.set(sessionId, session);
         if (this.sessionFsConfig) {
-            session.clientSessionApis.sessionFs = this.sessionFsConfig.createHandler(session);
+            if (config.createSessionFsHandler) {
+                session.clientSessionApis.sessionFs = config.createSessionFsHandler(session);
+            } else {
+                throw new Error(
+                    "createSessionFsHandler is required in session config when sessionFs is enabled in client options."
+                );
+            }
         }
 
         try {
